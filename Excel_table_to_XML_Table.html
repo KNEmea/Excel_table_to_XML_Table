@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Excel table to XML Table</title>
+	<style>
+		.hid {
+			width: 351px;
+			height: 20px;
+		}
+
+		.table {
+			border: 1px solid;
+		}
+
+		tr {
+			border: 1px solid;
+		}
+
+		td {
+			border: 1px solid;
+		}
+	</style>
+</head>
+
+<body>
+	<div>
+		<div>
+			<label>Please, copy all columns and rows with the value from the Excel, and put it to the first text area.
+				Then, press "Generate"</label>
+		</div>
+		<div>
+			<div>
+				<!-- &forall; - down;  -->
+				<button onclick="hid()" class="hid">Hide</button>
+				<input type="checkbox" class="chb" />
+				<label>Use the first line as title</label>
+			</div>
+			<div>
+				<textarea oninput="onCh()" class="ta" rows="10" cols="45"></textarea>
+			</div>
+			<div class="tableObj">
+			</div>
+			<div>
+				<div>
+					<button onclick="generateXML()">Generate</button>
+				</div>
+				<div>
+					<textarea class="ta2" rows="30" cols="70"></textarea>
+				</div>
+			</div>
+
+			<script>
+				let keyCount = 0;
+				let h = true;
+				function hid() {
+					let ta1 = document.querySelector('.ta');
+					let b1 = document.querySelector('.hid');
+					if (h == true) {
+						h = false;
+						ta1.style.display = "none";
+						b1.innerText = 'Unhide';
+					} else {
+						h = true;
+						ta1.innerText = '';
+						ta1.style.display = "";
+						b1.innerHTML = 'Hide';
+					}
+				}
+				//generate the code table
+				function onCh() {
+					let to = document.querySelector(".tableObj");
+					to.innerHTML = "";
+					let txt = document.querySelector(".ta").value;
+					const myArray = txt.split("\n");//get rows
+					let res = [];
+					let j = 0;
+					let size = 0;
+					for (let e of myArray) {
+						if (e.length > 0) {
+							const myArray2 = e.split("	");//get elements
+
+							let i = 0;
+							let tmp = [];
+							size = myArray2.length;
+							for (let e2 of myArray2) {
+								tmp[i] = e2;
+								i++;
+							}
+							res[j] = tmp;
+							j++;
+						}
+					}
+
+					let tab1 = document.createElement('table');
+					tab1.className = "table";
+					let steps1 = 0;
+					for (let e3 of res) {
+						if (steps1 == 0) {
+							steps1++;
+							let tr1 = document.createElement('tr');
+							let colSteps1 = 0;
+							let e3steps = 0;
+							for (let e4 of e3) {
+								let td1 = document.createElement('td');
+								if (colSteps1 == 0) {
+									td1.innerHTML = "<input type='checkbox' class='keySelection' value='" + colSteps1 + "' onclick='chbOnCh(" + colSteps1 + ")' checked/>";
+									colSteps1++;
+								} else if(e3steps < e3.length -1) {
+									td1.innerHTML = "<input type='checkbox' class='keySelection' value='" + colSteps1 + "' onclick='chbOnCh(" + colSteps1 + ")'/>";
+									colSteps1++;
+								}
+								e3steps++;
+								tr1.appendChild(td1);
+							}
+							tab1.appendChild(tr1);
+						}
+						let tr1 = document.createElement('tr');
+						for (let e4 of e3) {
+							let td1 = document.createElement('td');
+							td1.innerText = e4;
+							tr1.appendChild(td1);
+						}
+						tab1.appendChild(tr1);
+					}
+					to.appendChild(tab1);
+
+				}
+				//generate xml
+				function generateXML() {
+					let txt = document.querySelector(".ta").value;
+					let cBox1 = document.querySelector(".chb").checked;
+
+					const myArray = txt.split("\n");//get rows
+					let res = [];
+					let j = 0;
+					let size = 0;
+					for (let e of myArray) {
+						if (e.length > 0) {
+							const myArray2 = e.split("	");//get elements
+
+							let i = 0;
+							let tmp = [];
+							size = myArray2.length - keyCount;
+							let tmp2 = "";
+							let i2 = 0;
+							for (let e2 of myArray2) {
+								if(keyCount == 0) {
+									tmp[i] = e2;
+									i++;
+								} else {
+									if (i2 == 0) {
+										tmp2 = e2;
+										i2++;
+									} else if (i2 <= keyCount) {
+										tmp2 = tmp2 +"+" + e2;
+										i2++;
+									} else if (i2 == keyCount+1) {
+										tmp[i] = tmp2;
+										i2++;
+										i++;
+										tmp[i] = e2;
+										i++;
+									} else {
+										tmp[i] = e2;
+										i++;
+									}
+								}
+							}
+							res[j] = tmp;
+							j++;
+						}
+					}
+
+					let res2 = "";
+					for (let t1 = 1; t1 < size; t1++) {
+						let tm = "<Table TableNumber=\"" + t1 + "\" Label=\"label\" TableGroup=\"TabelGroup\">\n";
+						if (cBox1 == true) {
+							tm = "<Table TableNumber=\"" + t1 + "\" Label=\"" + res[0][t1] + "\" TableGroup=\"" + res[0][0] + "\">\n";
+						}
+						let l = 0;
+						for (let e3 of res) {
+							if (cBox1 == false) {
+								tm = tm + "<Value Key=\"" + e3[0] + "\">" + e3[t1] + "</Value>\n";
+							} else {
+								if (l > 0) {
+									tm = tm + "<Value Key=\"" + e3[0] + "\">" + e3[t1] + "</Value>\n";
+								}
+								l++;
+							}
+						}
+
+						tm = tm + "</Table>\n";
+						res2 = res2 + tm;
+					}
+					document.querySelector(".ta2").value = res2;
+				}
+			
+				function chbOnCh(val){
+					keyCount = val;
+					let tbChb1 = document.querySelectorAll(".keySelection");
+					for(let e of tbChb1){
+						if (e.value < val) {
+							e.checked = true;
+						} else if (e.value == val) {
+							if (e.checked == true) {
+								e.checked = true;
+							} else {
+								e.checked = false;
+								keyCount = keyCount-1;
+							}
+						}
+						else {
+							e.checked = false;
+						}
+					}
+				}
+			</script>
+</body>
+
+</html>
